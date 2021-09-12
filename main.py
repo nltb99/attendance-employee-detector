@@ -1,15 +1,11 @@
 from sklearn import neighbors
 import os
-import os.path
 import pickle
 from PIL import Image, ImageDraw
 import face_recognition
 from face_recognition.face_recognition_cli import image_files_in_folder
 import logging
 import argparse
-import shutil
-import tensorflow as tf
-import cv2
 from skimage import io
 import urllib
 
@@ -36,7 +32,8 @@ def train(train_dir, model_save_path=None):
                         y.append(class_dir)
                     print(f'Training {jdx}/{idx}/{len_dir_train}')
                     jdx+=1
-                except:
+                except Exception as e:
+                    logging.exception(e)
                     continue
             idx+=1
         except:
@@ -152,10 +149,10 @@ if __name__ == "__main__":
     parser.add_argument("-t", '--train', required=False,action='store_true',help="Train model")
     parser.add_argument("-p", '--predict', required=False,action='store_true',help="Predict data")
     parser.add_argument("-v", '--visualize', required=False,action='store_true',help="Visualize data predicted")
-    parser.add_argument("-ft", '--fetch-train', required=False,action='store_true',help="Fetch data for train")
+    parser.add_argument("-f", '--fetch', required=False,action='store_true',help="Fetch data for train")
     args = parser.parse_args()
 
-    if not args.train and not args.predict and not args.visualize and not args.fetch_train:
+    if not args.train and not args.predict and not args.visualize and not args.fetch:
         parser.error('No arguments provided.')
 
     if not args.predict and args.visualize:
@@ -177,20 +174,20 @@ if __name__ == "__main__":
                 try:
                     if len(predictions) != 0:
                         if predictions[0][0] != UNKNOWN_FACE:
-                            print(f'Detected face {path_image_test} matches to "{predictions[0][0]}"')
+                            print(f'Detected {path_image_test} match to: "{predictions[0][0]}"')
                         else:
-                            print(f'Unknown face detection {path_image_test}')
+                            print(f'Failed detected {path_image_test}:  unknown face ')
                     else:
-                        print(f'{path_image_test} unknown face')
+                        print(f'Failed detected {path_image_test}: unknown face')
                 except Exception as e:
-                    print(f'{path_image_test} unknown face')
+                    print(f'Failed detected {path_image_test}: unknown face')
                     logging.exception(e)
             # Visualize results
             if args.visualize and eligible_ext:
                 visualize_predicted(os.path.join(test_path, test_image), predictions)
 
     # Fetch images
-    if args.fetch_train:
+    if args.fetch:
         fetch_images()
 
 sql="""
